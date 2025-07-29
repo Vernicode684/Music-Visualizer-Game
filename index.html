@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Audio Visualizer</title>
+    <link rel="stylesheet" href="index.css">
+  </head>
+
+  <body>
+      <video autoplay muted loop id="bgVideo">
+        <source src="Videos/Synthwave Background.mp4" type="video/mp4">
+      </video>
+      
+      <input id="audio" type="file" accept="audio/*" multiple>
+      
+      <input type="range" value="0" id="progress">
+      <div id="time-display"><b>0:00 / 0:00</b></div>
+      <div class="button-row">
+
+        <button id="playBtn">
+          <img src="Buttons/cc599af35fc2419b5d0a391b053c039c.png" alt="playBtn"  class="button-icon">
+        </button>
+        <button id="pauseBtn">
+          <img src="Buttons/09057ac42247a6b6723bddc39dd36503.png" alt="pauseBtn"  class="button-icon">
+        </button>
+      </div>
+      <canvas id="canvas"></canvas>
+      <canvas id="game"></canvas>
+
+
+      <script src="Finished Controls.js"></script>
+ <script>
+  const gameCanvas = document.getElementById('game');
+  const ctx = gameCanvas.getContext('2d');
+  ctx.fillStyle = 'rgba(0, 255, 0, 0.4)';
+  ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+</script>
+ 
+ 
+    </body>
+
+</html>

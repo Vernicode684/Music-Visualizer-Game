@@ -1,0 +1,130 @@
+/* Put this in index.css */
+
+body {
+  margin: 0;
+  padding-top: 10px;
+  height: 100vh;
+  overflow: hidden;
+  font-family: sans-serif;
+  display: flex;
+  align-items:  baseline;
+  justify-content: center;
+  position: relative; /* Needed for absolute children */
+}
+
+*{
+  padding: 0px;
+  margin:0px;
+}
+
+#game {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vh;
+  height: 300px;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.1); /* optional */
+  border: 2px solid white; /* optional */
+  z-index: 5;
+}
+/* Background Video */
+#bgVideo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  min-width: 100vw;
+  min-height: 100vh;
+  object-fit: cover;
+  z-index: -2;
+}
+
+/* Canvas on top of video */
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  z-index: -1;
+}
+
+/* Input & buttons over everything */
+
+#playBtn,
+#pauseBtn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+
+
+.button-icon {
+  width: 20px;
+  height: 20px;
+}
+
+#audio{
+  position: absolute;
+  margin: 10px;
+  font-size: 16px;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  padding: 5px 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 5px;
+}
+
+.button-row{
+  display: flex;
+  flex-direction: row;
+  gap:10px;
+  position: relative;
+  z-index: 1;
+  padding-left: 10px;
+  padding-top:15px;
+}
+
+#time-display{
+  color: aliceblue;
+  font-family: 'Courier New', Courier, monospace;
+
+
+ 
+  padding-left: 10px;
+  margin:10px 0;
+
+ 
+  position: relative;
+
+}
+
+#progress{
+  -webkit-appearance: none;
+  height:6px;
+  background:white;
+  border-radius:4px;
+  cursor:pointer;
+  margin:20px 0;
+
+}
+
+#progress::-webkit-slider-thumb{
+   -webkit-appearance: none;
+   background:#f53192;
+   width:25px;
+   height:25px;
+   border-radius:50%;
+   border: 8px solid #fff;
+   box-shadow: 0 5px 5px rgba(256, 26, 26, 0.22);
+}
+  
+
+
