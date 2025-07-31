@@ -24,8 +24,8 @@ body {
   width: 100vh;
   height: 300px;
   transform: translate(-50%, -50%);
-  background-color: rgba(255, 255, 255, 0.1); /* optional */
-  border: 2px solid white; /* optional */
+  /*background-color: rgba(255, 103, 197, 0.1); /* optional */
+  /*border: 2px solid white; /* optional */
   z-index: 5;
 }
 /* Background Video */
@@ -67,6 +67,7 @@ body {
 .button-icon {
   width: 20px;
   height: 20px;
+  padding-top:3px;
 }
 
 #audio{
@@ -95,7 +96,7 @@ body {
 #time-display{
   color: aliceblue;
   font-family: 'Courier New', Courier, monospace;
-
+  font-weight: bold;
 
  
   padding-left: 10px;

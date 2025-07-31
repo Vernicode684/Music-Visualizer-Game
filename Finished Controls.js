@@ -213,7 +213,7 @@ function visualize() {
         canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
         //Add translucent black overlay (this is your tint!)
-        canvasContext.fillStyle = "rgba(0, 0, 0, 0.6)"; // adjust alpha for desired tint
+        canvasContext.fillStyle = "rgba(0, 0, 0, 0)"; // adjust alpha for desired tint
         canvasContext.fillRect(0, 0, canvas.width, canvas.height);
 
         analyser.getByteFrequencyData(frequencyData);
