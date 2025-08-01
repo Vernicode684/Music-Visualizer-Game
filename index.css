@@ -21,11 +21,10 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 100vh;
-  height: 300px;
+  
   transform: translate(-50%, -50%);
   /*background-color: rgba(255, 103, 197, 0.1); /* optional */
-  /*border: 2px solid white; /* optional */
+  border: 2px solid white; /* optional */
   z-index: 5;
 }
 /* Background Video */
@@ -127,5 +126,4 @@ body {
    box-shadow: 0 5px 5px rgba(256, 26, 26, 0.22);
 }
   
-
 
