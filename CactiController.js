@@ -57,10 +57,20 @@ export default class CactiController {
             cactus.update(this.speed, gameSpeed, frameTimeDelta, this.scaleRatio)
         });
       
+        this.cacti = this.cacti.filter((cactus)=> cactus.x > - cactus.width);
+        console.log(this.cacti.length); 
     }
 
     draw() {
         this.cacti.forEach(cactus=>cactus.draw())
        
+    }
+
+    collideWith(sprite){
+        return this.cacti.some(cactus=> cactus.collideWith(sprite));
+    }
+
+    reset(){
+        this.cacti=[];
     }
 }

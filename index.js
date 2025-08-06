@@ -50,6 +50,10 @@ let scaleRatio = null;
 let previousTime = null;
 let gameSpeed = GAME_SPEED_START;
 let cactiController = null;
+let hasAddedEventListenersForRestart=false;
+
+let gameOver = false;
+
 
 function createSprites() {
     const playerWidthInGame = PLAYER_WIDTH * scaleRatio;
@@ -123,6 +127,35 @@ function getScaleRatio() {
     }
 }
 
+function showGameOver(){
+    const fontSize = 70 * scaleRatio;
+    ctx.font = `bold ${fontSize}px Courier New`;
+    ctx.fillStyle = "white";
+    const x = game.width / 4.5;
+    const y = game.height/2;
+    ctx.fillText("GAME OVER", x, y);
+}
+
+function setupGameReset(){
+    if(!hasAddedEventListenersForRestart){
+        hasAddedEventListenersForRestart=true;
+
+        setTimeout(()=>{
+            window.addEventListener("keyup", reset,{once:true});
+            window.addEventListener("touchstart", reset,{once:true});
+        }, 1000);
+
+    }
+}
+
+function reset (){
+    hasAddedEventListenersForRestart= false;
+    gameOver= false;
+    ground.reset();
+    cactiController.reset();
+    gameSpeed = GAME_SPEED_START;
+}
+
 function clearScreen() {
     ctx.clearRect(0, 0, game.width, game.height);
 }
@@ -138,15 +171,34 @@ function gameLoop(currentTime) {
     //console.log(frameTimeDelta);
     clearScreen();
 
-    // Update Game Objects
-    ground.update(gameSpeed, frameTimeDelta);
-    cactiController.update(gameSpeed, frameTimeDelta);
-    player.update(gameSpeed, frameTimeDelta);
+    if(!gameOver){
 
+        // Update Game Objects
+        ground.update(gameSpeed, frameTimeDelta);
+        cactiController.update(gameSpeed, frameTimeDelta);
+        player.update(gameSpeed, frameTimeDelta);
+     
+    }
+
+
+    if (!gameOver && cactiController.collideWith(player)){
+        gameOver = true;
+        /*source.stop();
+        isPlaying = false;
+        source = null;*/
+        setupGameReset();
+
+    }
     // Draw Game Objects
     ground.draw();
     cactiController.draw();
     player.draw();
+
+    if(gameOver){
+        showGameOver();
+
+        
+    }
 
     requestAnimationFrame(gameLoop);
 }
