@@ -38,11 +38,11 @@ const GROUND_AND_CACTUS_SPEED = 0.5;
 
 
 const CACTI_CONFIG = [
-    {width:48/1.5, height:100/1.5, image:'images/cactus_1.png'},
-    {width:98/1.5, height:100/1.5, image:'images/cactus_2.png'},
-    {width:68/1.5, height:70/1.5, image:'images/cactus_3.png'},
-]
-
+    {width:38/1.5, height:60/1.5, image:'images/cactus_1.png'},
+    {width:78/1.5, height:60/1.5, image:'images/cactus_2.png'},
+    {width:58/1.5,   height:60/1.5, image:'images/cactus_3.png'},
+] 
+  
 // Game Objects
 let player = null;
 let ground = null;
@@ -197,7 +197,7 @@ function gameLoop(currentTime) {
     if(gameOver){
         showGameOver();
 
-        
+         
     }
 
     requestAnimationFrame(gameLoop);
