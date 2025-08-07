@@ -53,6 +53,7 @@ let cactiController = null;
 let hasAddedEventListenersForRestart=false;
 
 let gameOver = false;
+let waitingToStart = true;
 
 
 function createSprites() {
@@ -130,10 +131,17 @@ function getScaleRatio() {
 function showGameOver(){
     const fontSize = 70 * scaleRatio;
     ctx.font = `bold ${fontSize}px Courier New`;
-    ctx.fillStyle = "white";
-    const x = game.width / 4.5;
+    ctx.fillStyle = "white"; 
+    const x = game.width / 4;
     const y = game.height/2;
-    ctx.fillText("GAME OVER", x, y);
+  
+    ctx.lineWidth = 5 * scaleRatio;            // Thickness of the outline
+    ctx.strokeStyle = "black";                 // Outline color
+    ctx.strokeText("GAME OVER", x, y); // Draw outline
+
+    // Fill settings
+    ctx.fillStyle = "white";                   // Fill color
+    ctx.fillText("GAME OVER", x, y);   // Fill text
 }
 
 function setupGameReset(){
@@ -148,14 +156,30 @@ function setupGameReset(){
     }
 }
 
-function reset (){
+function reset(){
     hasAddedEventListenersForRestart= false;
     gameOver= false;
+    waitingToStart = false;
     ground.reset();
     cactiController.reset();
     gameSpeed = GAME_SPEED_START;
 }
 
+function showStartGameText() {
+    const fontSize = 30 * scaleRatio;
+    ctx.font = `bold ${fontSize}px Courier New`;
+    const x = game.width / 10;
+    const y = game.height / 2;
+
+    // Outline settings
+    ctx.lineWidth = 2 * scaleRatio;            // Thickness of the outline
+    ctx.strokeStyle = "black";                 // Outline color
+    ctx.strokeText("Tap Screen or Press Space to Start", x, y); // Draw outline
+
+    // Fill settings
+    ctx.fillStyle = "white";                   // Fill color
+    ctx.fillText("Tap Screen or Press Space to Start", x, y);   // Fill text
+}
 function clearScreen() {
     ctx.clearRect(0, 0, game.width, game.height);
 }
@@ -171,7 +195,7 @@ function gameLoop(currentTime) {
     //console.log(frameTimeDelta);
     clearScreen();
 
-    if(!gameOver){
+    if(!gameOver && !waitingToStart){
 
         // Update Game Objects
         ground.update(gameSpeed, frameTimeDelta);
@@ -200,10 +224,19 @@ function gameLoop(currentTime) {
          
     }
 
+    if (waitingToStart){
+        showStartGameText();
+    }
+
     requestAnimationFrame(gameLoop);
 }
 
 requestAnimationFrame(gameLoop);
+
+window.addEventListener("keyup", reset, {once:true });
+window.addEventListener("touchStart", reset, {once:true });
+
+
 
 canvas.width = canvas.clientWidth;
 canvas.height = canvas.clientHeight;
