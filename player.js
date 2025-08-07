@@ -18,8 +18,8 @@ export default class Player{
         this.maxJumpHeight = maxJumpHeight;
         this.scaleRatio = scaleRatio;
         
-        this.x= 10 * scaleRatio;
-        this.y= this.game.height - this.height - 1.5 * scaleRatio;
+        this.x= 8 * scaleRatio;
+        this.y= this.game.height - this.height - 1 * scaleRatio;
         this.yStandingPosition = this.y;
 
         this.standingStillImage = new Image();
