@@ -23,6 +23,8 @@ const canvasContext = canvas.getContext("2d"); // this is to draw bars on the ca
 const timeDisplay = document.getElementById("time-display");
 const game = document.getElementById("game"); // game canvas
 const ctx = game.getContext("2d");
+const gameOverSound1 = new Audio("SoundEffects/game-over-voice-355993.mp3");
+const gameOverSound2 = new Audio("SoundEffects/game-over-arcade-6435.mp3");
 
 const GAME_SPEED_START = 0.5; // 1.0
 const GAME_SPEED_INCREMENT = 0.00001;
@@ -226,6 +228,11 @@ function gameLoop(currentTime) {
         /*source.stop();
         isPlaying = false;
         source = null;*/
+        gameOverSound1.currentTime = 0; // rewind in case it was already played
+        gameOverSound1.play();
+
+        gameOverSound2.currentTime = 0;
+        gameOverSound2.play();
         setupGameReset();
         score.setHighScore();
 
