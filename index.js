@@ -133,7 +133,7 @@ function showGameOver(){
     ctx.font = `bold ${fontSize}px Courier New`;
     ctx.fillStyle = "white"; 
     const x = game.width / 4;
-    const y = game.height/2;
+    const y = game.height/2;   
   
     ctx.lineWidth = 5 * scaleRatio;            // Thickness of the outline
     ctx.strokeStyle = "black";                 // Outline color
@@ -180,11 +180,16 @@ function showStartGameText() {
     ctx.fillStyle = "white";                   // Fill color
     ctx.fillText("Tap Screen or Press Space to Start", x, y);   // Fill text
 }
+
+function updateGameSpeed(frameTimeDelta){
+    gameSpeed += frameTimeDelta * GAME_SPEED_INCREMENT;
+}
 function clearScreen() {
     ctx.clearRect(0, 0, game.width, game.height);
 }
 
 function gameLoop(currentTime) {
+    console.log(gameSpeed);
     if (previousTime == null) {
         previousTime = currentTime;
         requestAnimationFrame(gameLoop);
@@ -201,6 +206,7 @@ function gameLoop(currentTime) {
         ground.update(gameSpeed, frameTimeDelta);
         cactiController.update(gameSpeed, frameTimeDelta);
         player.update(gameSpeed, frameTimeDelta);
+        updateGameSpeed(frameTimeDelta);
      
     }
 
