@@ -59,7 +59,7 @@ export default class CactiController {
       
         this.cacti = this.cacti.filter((cactus)=> cactus.x > - cactus.width);
         console.log(this.cacti.length); 
-    } // ask chat abt this method
+    } 
 
     draw() {
         this.cacti.forEach(cactus=>cactus.draw())

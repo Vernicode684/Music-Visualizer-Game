@@ -1,6 +1,7 @@
 import Player from './player.js'
 import Ground from './ground.js'
 import CactiController from './CactiController.js';
+import Score from './Score.js';
 
 let audioContext = null; // sound control room where you can analyze sound files
 let source = null; // the thing that actually plays the sound
@@ -46,6 +47,7 @@ const CACTI_CONFIG = [
 // Game Objects
 let player = null;
 let ground = null;
+let score = null;
 let scaleRatio = null;
 let previousTime = null;
 let gameSpeed = GAME_SPEED_START;
@@ -54,6 +56,7 @@ let hasAddedEventListenersForRestart=false;
 
 let gameOver = false;
 let waitingToStart = true;
+
 
 
 function createSprites() {
@@ -91,6 +94,11 @@ function createSprites() {
         }
     })
     cactiController= new CactiController (ctx, cactiImages, scaleRatio, GROUND_AND_CACTUS_SPEED);
+
+    score = new Score (ctx, scaleRatio)
+
+    
+
 }
 
 function setScreen() {
@@ -162,12 +170,13 @@ function reset(){
     waitingToStart = false;
     ground.reset();
     cactiController.reset();
+    score.reset();
     gameSpeed = GAME_SPEED_START;
 }
 
 function showStartGameText() {
     const fontSize = 30 * scaleRatio;
-    ctx.font = `bold ${fontSize}px Courier New`;
+    ctx.font = ` ${fontSize}px Courier New`;
     const x = game.width / 10;
     const y = game.height / 2;
 
@@ -206,6 +215,7 @@ function gameLoop(currentTime) {
         ground.update(gameSpeed, frameTimeDelta);
         cactiController.update(gameSpeed, frameTimeDelta);
         player.update(gameSpeed, frameTimeDelta);
+        score.update(frameTimeDelta);
         updateGameSpeed(frameTimeDelta);
      
     }
@@ -217,12 +227,14 @@ function gameLoop(currentTime) {
         isPlaying = false;
         source = null;*/
         setupGameReset();
+        score.setHighScore();
 
     }
     // Draw Game Objects
     ground.draw();
     cactiController.draw();
     player.draw();
+    score.draw();
 
     if(gameOver){
         showGameOver();
