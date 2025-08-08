@@ -13,7 +13,9 @@ let isPlaying = false;
 let audioBuffer = null; // music track loaded into memory
 let donePlaying = true;
 let duration = 0 ;
+let paused = false;
 let progress = document.getElementById("progress");
+
 
 const fileInput = document.getElementById("audio");
 const playBtn = document.getElementById("playBtn");
@@ -339,7 +341,7 @@ function reset(){
     
 }
 
-function handlePlayClick() {
+async function handlePlayClick() {
     if (!audioBuffer) {
         console.warn("No audio loaded.");
         return;
@@ -354,14 +356,29 @@ function handlePlayClick() {
         pausedAt = 0;
     }
 
+    if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+    }
+
+    if(gameOver){
+        return;
+    }
+
+    paused = false;  // <== Add this line to resume game update
+
     createSource();
     startTime = audioContext.currentTime - pausedAt;
     source.start(0, pausedAt);
     isPlaying = true;
     donePlaying = false;
 
+    playBtn.removeEventListener("click", handlePlayClick);
+    playBtn.addEventListener("click", handlePlayClick);
+
+
     console.log("Playback started at offset:", pausedAt);
 }
+playBtn.addEventListener("click", handlePlayClick);
 
 
 pauseBtn.addEventListener("click", () => {
@@ -376,28 +393,28 @@ pauseBtn.addEventListener("click", () => {
         return;
     }
 
-
     pausedAt = audioContext.currentTime - startTime;
     source.stop();
     isPlaying = false;
     source = null;
+    paused = true;
     console.log("Playback paused at:", pausedAt);
 });
 
 function showStartGameText() {
-    const fontSize = 30 * scaleRatio;
+    const fontSize = 20 * scaleRatio;
     ctx.font = ` ${fontSize}px Courier New`;
-    const x = game.width / 10;
+    const x = game.width /5;
     const y = game.height / 2;
 
     // Outline settings
     ctx.lineWidth = 2 * scaleRatio;            // Thickness of the outline
     ctx.strokeStyle = "black";                 // Outline color
-    ctx.strokeText("Tap Screen or Press Space to Start", x, y); // Draw outline
+    ctx.strokeText("Upload Music and Press Space or Tap to Start", x, y); // Draw outline
 
     // Fill settings
     ctx.fillStyle = "white";                   // Fill color
-    ctx.fillText("Tap Screen or Press Space to Start", x, y);   // Fill text
+    ctx.fillText("Upload Music and Press Space or Tap to Start", x, y);   // Fill text
 }
 
 function updateGameSpeed(frameTimeDelta){
@@ -407,78 +424,73 @@ function clearScreen() {
     ctx.clearRect(0, 0, game.width, game.height);
 }
 
+
 function gameLoop(currentTime) {
-    console.log(gameSpeed);
     if (previousTime == null) {
         previousTime = currentTime;
         requestAnimationFrame(gameLoop);
         return;
     }
+
     const frameTimeDelta = currentTime - previousTime;
     previousTime = currentTime;
-    //console.log(frameTimeDelta);
+
     clearScreen();
 
-    if(!gameOver && !waitingToStart){
+    if (!paused) {
+        if (!gameOver && !waitingToStart) {
+            ground.update(gameSpeed, frameTimeDelta);
+            cactiController.update(gameSpeed, frameTimeDelta);
+            player.update(gameSpeed, frameTimeDelta);
+            score.update(frameTimeDelta);
+            updateGameSpeed(frameTimeDelta);
 
-        // Update Game Objects
-        ground.update(gameSpeed, frameTimeDelta);
-        cactiController.update(gameSpeed, frameTimeDelta);
-        player.update(gameSpeed, frameTimeDelta);
-        score.update(frameTimeDelta);
-        updateGameSpeed(frameTimeDelta);
-        playBtn.addEventListener("click", handlePlayClick )
-     
-    }
- 
+            if (!gameOver && cactiController.collideWith(player)) {
+                gameOver = true;
+                if (source && isPlaying) {
+                    source.stop();
+                    isPlaying = false;
+                }
+                gameOverSound2.volume = 1;  // 50% volume
+                gameOverSound2.currentTime = 0;
+                gameOverSound2.play();
 
-    if (!gameOver && cactiController.collideWith(player)){
-       
-        gameOver = true;
-        if (source && isPlaying) {
-        source.stop();
-        isPlaying = false;
+                gameOverSound1.volume = 0.2;  // 30% volume
+                gameOverSound1.currentTime = 0;
+                gameOverSound1.play();
+                setupGameReset();
+                score.setHighScore();
+
+                playBtn.addEventListener("click", handlePlayClick);
+            }
         }
-        //isPlaying = false;
-        //source = null;
-        //gameOverSound1.currentTime = 0; // rewind in case it was already played
-        //gameOverSound1.play();
-
-        gameOverSound2.currentTime = 0;
-        gameOverSound2.play();
-        setupGameReset();
-        score.setHighScore();
-
     }
-    // Draw Game Objects
+
+    // Always draw, even if paused
     ground.draw();
     cactiController.draw();
     player.draw();
     score.draw();
 
-    if(gameOver){
+    if (gameOver) {
         showGameOver();
-        playBtn.removeEventListener("click", handlePlayClick );
-      
-
-         
     }
-
-    if (waitingToStart){
+    if (waitingToStart) {
         showStartGameText();
-
-
     }
 
     requestAnimationFrame(gameLoop);
 }
 
+requestAnimationFrame(gameLoop);
 
- requestAnimationFrame(gameLoop);
 
  /*if (file){
   
     window.addEventListener("keyup", reset, {once:true });
     window.addEventListener("touchStart", reset, {once:true });
  }*/
+
+
+
 
