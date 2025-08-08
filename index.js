@@ -60,6 +60,147 @@ let gameOver = false;
 let waitingToStart = true;
 
 
+canvas.width = canvas.clientWidth;
+canvas.height = canvas.clientHeight;
+
+
+
+fileInput.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    console.log("Now playing:", event);
+    console.log("Now playing:", file.name);
+    if (!file) {
+        
+ 
+      return;
+    }
+
+    
+
+    // Stop previous source if any
+    stopCurrentPlayback();
+
+    const reader = new FileReader();
+
+    reader.addEventListener("load", async (event) => {
+        const arrayBuffer = event.target.result;
+        if (!audioContext || audioContext.state === "closed") {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Create analyser only once
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 512; // higher number means more detailed visualization
+        }
+
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        duration = audioBuffer.duration;
+
+        window.addEventListener("keyup", reset, { once: true });
+        window.addEventListener("touchStart", reset, { once: true });
+       
+    });
+
+    reader.readAsArrayBuffer(file);
+});
+
+function stopCurrentPlayback() {
+    if (source) {
+        try {
+            source.stop();
+        } catch (e) { }
+        source.disconnect();
+        source = null;
+    }
+    isPlaying = false;
+}
+
+function createSource() {
+    source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+
+    source.onended = () => {
+        if (pausedAt < duration) return; // stopped early (paused)
+
+        isPlaying = false;
+        pausedAt = 0;
+        donePlaying = true;
+
+        console.log("Playback ended");
+    };
+}
+
+
+
+function formatTime(seconds) {
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec.toString().padStart(2, "0")}`;
+}
+
+function updateTime() {
+    if (isPlaying && audioBuffer) {
+        const elapsed = audioContext.currentTime - startTime;
+        progress.max = duration;
+        progress.value = elapsed;
+
+        timeDisplay.textContent = `${formatTime(elapsed)} / ${formatTime(duration)}`;
+        if (elapsed >= duration) {
+            timeDisplay.textContent = `${formatTime(duration)} / ${formatTime(duration)}`;
+        }
+    }
+    requestAnimationFrame(updateTime);
+}
+updateTime();
+
+function visualize() {
+    const frequencyBufferLength = analyser.frequencyBinCount;
+    const frequencyData = new Uint8Array(frequencyBufferLength);
+
+    const barSpacing = 2;
+    const rawBarWidth = canvas.width / (frequencyBufferLength / 2);
+    const barWidth = rawBarWidth - barSpacing;
+
+    function draw() {
+        requestAnimationFrame(draw);
+
+        canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+
+        // translucent black overlay (tint)
+        canvasContext.fillStyle = "rgba(0, 0, 0, 0)";
+        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+
+        analyser.getByteFrequencyData(frequencyData);
+
+        for (let i = 0; i < frequencyBufferLength; i += 2) {
+            const value = frequencyData[i];
+            const barHeight = value;
+
+            const hue = (i / frequencyBufferLength) * 360;
+            const saturation = 100;
+            const lightness = 50;
+            const barColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+            const glowStrength = (value / 255) * (i / frequencyBufferLength) * 100;
+
+            canvasContext.shadowColor = barColor;
+            canvasContext.shadowBlur = glowStrength;
+            canvasContext.fillStyle = barColor;
+
+            const x = (i / 2) * rawBarWidth;
+
+            canvasContext.fillRect(
+                x,
+                canvas.height - (barHeight - 30),
+                barWidth * ((i + 3) / frequencyBufferLength - (frequencyBufferLength - 50) / frequencyBufferLength),
+                barHeight
+            );
+        }
+    }
+
+    draw();
+}
+
 
 function createSprites() {
     const playerWidthInGame = PLAYER_WIDTH * scaleRatio;
@@ -174,7 +315,74 @@ function reset(){
     cactiController.reset();
     score.reset();
     gameSpeed = GAME_SPEED_START;
+    
+        // Update Game Objects
+        pausedAt = 0; // to play from beginning
+
+           
+        if (audioBuffer && audioContext) {
+            createSource();
+            startTime = audioContext.currentTime;
+            source.start(0);
+            isPlaying = true;
+            donePlaying = false;
+        }
+           
+
+            console.log("Audio started from file upload");
+
+            // Start visualization loop if not already started
+            if (!window.visualizeStarted) {
+                window.visualizeStarted = true;
+                visualize();
+            }
+    
 }
+
+function handlePlayClick() {
+    if (!audioBuffer) {
+        console.warn("No audio loaded.");
+        return;
+    }
+
+    if (isPlaying) {
+        console.log("Already playing");
+        return;
+    }
+
+    if (donePlaying) {
+        pausedAt = 0;
+    }
+
+    createSource();
+    startTime = audioContext.currentTime - pausedAt;
+    source.start(0, pausedAt);
+    isPlaying = true;
+    donePlaying = false;
+
+    console.log("Playback started at offset:", pausedAt);
+}
+
+
+pauseBtn.addEventListener("click", () => {
+    if (pausedAt >= duration) {
+        console.log("Done Playing");
+        donePlaying = true;
+        return;
+    }
+
+    if (!isPlaying) {
+        console.log("Nothing is playing");
+        return;
+    }
+
+
+    pausedAt = audioContext.currentTime - startTime;
+    source.stop();
+    isPlaying = false;
+    source = null;
+    console.log("Playback paused at:", pausedAt);
+});
 
 function showStartGameText() {
     const fontSize = 30 * scaleRatio;
@@ -219,17 +427,22 @@ function gameLoop(currentTime) {
         player.update(gameSpeed, frameTimeDelta);
         score.update(frameTimeDelta);
         updateGameSpeed(frameTimeDelta);
+        playBtn.addEventListener("click", handlePlayClick )
      
     }
-
+ 
 
     if (!gameOver && cactiController.collideWith(player)){
+       
         gameOver = true;
-        /*source.stop();
+        if (source && isPlaying) {
+        source.stop();
         isPlaying = false;
-        source = null;*/
-        gameOverSound1.currentTime = 0; // rewind in case it was already played
-        gameOverSound1.play();
+        }
+        //isPlaying = false;
+        //source = null;
+        //gameOverSound1.currentTime = 0; // rewind in case it was already played
+        //gameOverSound1.play();
 
         gameOverSound2.currentTime = 0;
         gameOverSound2.play();
@@ -245,207 +458,27 @@ function gameLoop(currentTime) {
 
     if(gameOver){
         showGameOver();
+        playBtn.removeEventListener("click", handlePlayClick );
+      
 
          
     }
 
     if (waitingToStart){
         showStartGameText();
+
+
     }
 
     requestAnimationFrame(gameLoop);
 }
 
-requestAnimationFrame(gameLoop);
 
-window.addEventListener("keyup", reset, {once:true });
-window.addEventListener("touchStart", reset, {once:true });
+ requestAnimationFrame(gameLoop);
 
+ /*if (file){
+  
+    window.addEventListener("keyup", reset, {once:true });
+    window.addEventListener("touchStart", reset, {once:true });
+ }*/
 
-
-canvas.width = canvas.clientWidth;
-canvas.height = canvas.clientHeight;
-
-fileInput.addEventListener("change", (event) => {
-    const file = event.target.files[0];
-    console.log("Now playing:", event);
-    console.log("Now playing:", file.name);
-    if (!file) return;
-
-    // Stop previous source if any
-    stopCurrentPlayback();
-
-    const reader = new FileReader();
-
-    reader.addEventListener("load", async (event) => {
-        const arrayBuffer = event.target.result;
-        if (!audioContext || audioContext.state === "closed") {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-            // Create analyser only once
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 512; // higher number means more detailed visualization
-        }
-
-        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        duration = audioBuffer.duration;
-
-        pausedAt = 0; // to play from beginning
-
-        startTime = audioContext.currentTime;
-        createSource();
-        source.start(); // start playing song
-        isPlaying = true;
-        donePlaying = false;
-
-        console.log("Audio started from file upload");
-
-        // Start visualization loop if not already started
-        if (!window.visualizeStarted) {
-            window.visualizeStarted = true;
-            visualize();
-        }
-    });
-
-    reader.readAsArrayBuffer(file);
-});
-
-function stopCurrentPlayback() {
-    if (source) {
-        try {
-            source.stop();
-        } catch (e) { }
-        source.disconnect();
-        source = null;
-    }
-    isPlaying = false;
-}
-
-function createSource() {
-    source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(analyser);
-    analyser.connect(audioContext.destination);
-
-    source.onended = () => {
-        if (pausedAt < duration) return; // stopped early (paused)
-
-        isPlaying = false;
-        pausedAt = 0;
-        donePlaying = true;
-
-        console.log("Playback ended");
-    };
-}
-
-playBtn.addEventListener("click", () => {
-    if (!audioBuffer) {
-        console.warn("No audio loaded.");
-        return;
-    }
-
-    if (isPlaying) {
-        console.log("Already playing");
-        return;
-    }
-
-    if (donePlaying) {
-        pausedAt = 0;
-    }
-
-    createSource();
-    startTime = audioContext.currentTime - pausedAt;
-    source.start(0, pausedAt);
-    isPlaying = true;
-    donePlaying = false;
-
-    console.log("Playback started at offset:", pausedAt);
-});
-
-pauseBtn.addEventListener("click", () => {
-    if (pausedAt >= duration) {
-        console.log("Done Playing");
-        donePlaying = true;
-        return;
-    }
-
-    if (!isPlaying) {
-        console.log("Nothing is playing");
-        return;
-    }
-
-
-    pausedAt = audioContext.currentTime - startTime;
-    source.stop();
-    isPlaying = false;
-    source = null;
-    console.log("Playback paused at:", pausedAt);
-});
-
-function formatTime(seconds) {
-    const min = Math.floor(seconds / 60);
-    const sec = Math.floor(seconds % 60);
-    return `${min}:${sec.toString().padStart(2, "0")}`;
-}
-
-function updateTime() {
-    if (isPlaying && audioBuffer) {
-        const elapsed = audioContext.currentTime - startTime;
-        progress.max = duration;
-        progress.value = elapsed;
-
-        timeDisplay.textContent = `${formatTime(elapsed)} / ${formatTime(duration)}`;
-        if (elapsed >= duration) {
-            timeDisplay.textContent = `${formatTime(duration)} / ${formatTime(duration)}`;
-        }
-    }
-    requestAnimationFrame(updateTime);
-}
-updateTime();
-
-function visualize() {
-    const frequencyBufferLength = analyser.frequencyBinCount;
-    const frequencyData = new Uint8Array(frequencyBufferLength);
-
-    const barSpacing = 2;
-    const rawBarWidth = canvas.width / (frequencyBufferLength / 2);
-    const barWidth = rawBarWidth - barSpacing;
-
-    function draw() {
-        requestAnimationFrame(draw);
-
-        canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-
-        // translucent black overlay (tint)
-        canvasContext.fillStyle = "rgba(0, 0, 0, 0)";
-        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-
-        analyser.getByteFrequencyData(frequencyData);
-
-        for (let i = 0; i < frequencyBufferLength; i += 2) {
-            const value = frequencyData[i];
-            const barHeight = value;
-
-            const hue = (i / frequencyBufferLength) * 360;
-            const saturation = 100;
-            const lightness = 50;
-            const barColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-            const glowStrength = (value / 255) * (i / frequencyBufferLength) * 100;
-
-            canvasContext.shadowColor = barColor;
-            canvasContext.shadowBlur = glowStrength;
-            canvasContext.fillStyle = barColor;
-
-            const x = (i / 2) * rawBarWidth;
-
-            canvasContext.fillRect(
-                x,
-                canvas.height - (barHeight - 30),
-                barWidth * ((i + 3) / frequencyBufferLength - (frequencyBufferLength - 50) / frequencyBufferLength),
-                barHeight
-            );
-        }
-    }
-
-    draw();
-}
