@@ -27,6 +27,7 @@ const game = document.getElementById("game"); // game canvas
 const ctx = game.getContext("2d");
 const gameOverSound1 = new Audio("SoundEffects/game-over-voice-355993.mp3");
 const gameOverSound2 = new Audio("SoundEffects/game-over-arcade-6435.mp3");
+const welcome = new Audio("SoundEffects/Roi (Instrumental).mp3");
 
 const GAME_SPEED_START = 0.5; // 1.0
 const GAME_SPEED_INCREMENT = 0.00001;
@@ -41,6 +42,14 @@ const GROUND_WIDTH = 2400;
 const GROUND_HEIGHT = 24;
 const GROUND_AND_CACTUS_SPEED = 0.5;
 
+
+function unlockAndPlayWelcomeAudio() {
+    welcome.currentTime = 0;
+    welcome.play().catch(() => console.log('Audio playback was prevented by the browser.'));
+
+    // Remove event listeners after first interaction
+    window.removeEventListener('keydown', unlockAndPlayWelcomeAudio);
+}
 
 const CACTI_CONFIG = [
     {width:38/1.5, height:60/1.5, image:'images/cactus_1.png'},
@@ -283,7 +292,7 @@ function getScaleRatio() {
 
 function showGameOver(){
     const fontSize = 70 * scaleRatio;
-    ctx.font = `bold ${fontSize}px Courier New`;
+    ctx.font = ` ${fontSize}px Courier New`;
     ctx.fillStyle = "white"; 
     const x = game.width / 4;
     const y = game.height/2;   
@@ -310,6 +319,13 @@ function setupGameReset(){
 }
 
 function reset(){
+    if (!welcome.paused) {
+        welcome.pause();
+        welcome.currentTime = 0;
+        window.removeEventListener('keydown', unlockAndPlayWelcomeAudio);
+
+    }
+
     hasAddedEventListenersForRestart= false;
     gameOver= false;
     waitingToStart = false;
@@ -402,6 +418,7 @@ pauseBtn.addEventListener("click", () => {
 });
 
 function showStartGameText() {
+    window.addEventListener('keydown', unlockAndPlayWelcomeAudio, { once: true });
     const fontSize = 20 * scaleRatio;
     ctx.font = ` ${fontSize}px Courier New`;
     const x = game.width /5;
@@ -415,6 +432,7 @@ function showStartGameText() {
     // Fill settings
     ctx.fillStyle = "white";                   // Fill color
     ctx.fillText("Upload Music and Press Space or Tap to Start", x, y);   // Fill text
+    
 }
 
 function updateGameSpeed(frameTimeDelta){
@@ -444,6 +462,8 @@ function gameLoop(currentTime) {
             player.update(gameSpeed, frameTimeDelta);
             score.update(frameTimeDelta);
             updateGameSpeed(frameTimeDelta);
+           
+
 
             if (!gameOver && cactiController.collideWith(player)) {
                 gameOver = true;
@@ -455,7 +475,7 @@ function gameLoop(currentTime) {
                 gameOverSound2.currentTime = 0;
                 gameOverSound2.play();
 
-                gameOverSound1.volume = 0.2;  // 30% volume
+                gameOverSound1.volume = 0.5;  // 30% volume
                 gameOverSound1.currentTime = 0;
                 gameOverSound1.play();
                 setupGameReset();

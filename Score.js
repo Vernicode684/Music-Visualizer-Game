@@ -2,6 +2,8 @@ export default class Score {
     
     score = 0;
     HIGHT_SCORE_KEY = "highScore";
+    audio = new Audio("Mario Coin Sound - Sound Effect (HD).mp3");
+   
 
 
     constructor(ctx, scaleRatio){
@@ -22,6 +24,9 @@ export default class Score {
         const highScore = Number(localStorage.getItem(this.HIGHT_SCORE_KEY));
         if(this.score > highScore){
             localStorage.setItem(this.HIGHT_SCORE_KEY, Math.floor(this.score));
+            audio.currentTime = 0;
+            audio.play();
+
         }
     }
 
