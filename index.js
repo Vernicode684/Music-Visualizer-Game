@@ -6,6 +6,8 @@ import Score from './Score.js';
 let audioContext = null; // sound control room where you can analyze sound files
 let source = null; // the thing that actually plays the sound
 let analyser = null;
+let currentSongName = null;
+let songChanged = false;
 
 let pausedAt = 0;     // How far into the audio we paused (seconds)
 let startTime = 0;    // AudioContext time when playback started
@@ -14,6 +16,7 @@ let audioBuffer = null; // music track loaded into memory
 let donePlaying = true;
 let duration = 0 ;
 let paused = false;
+let lastSongName = null;
 let progress = document.getElementById("progress");
 
 
@@ -44,7 +47,7 @@ const GROUND_AND_CACTUS_SPEED = 0.5;
 
 
 function unlockAndPlayWelcomeAudio() {
-    welcome.currentTime = 0;
+    welcome.currentTime = 19;
     welcome.play().catch(() => console.log('Audio playback was prevented by the browser.'));
 
     // Remove event listeners after first interaction
@@ -75,6 +78,21 @@ canvas.width = canvas.clientWidth;
 canvas.height = canvas.clientHeight;
 
 
+function stopCurrentPlayback() {
+    if (source) {
+        try {
+            source.stop();
+        } catch (e) { }
+        source.disconnect();
+        source = null;
+    }
+    isPlaying = false;
+}
+
+
+
+// SPACE key handling
+
 
 fileInput.addEventListener("change", (event) => {
     const file = event.target.files[0];
@@ -91,6 +109,12 @@ fileInput.addEventListener("change", (event) => {
     // Stop previous source if any
     stopCurrentPlayback();
 
+     // Detect if this is a new song
+    if (currentSongName !== file.name) {
+        currentSongName = file.name;
+        songChanged = true;
+    }
+
     const reader = new FileReader();
 
     reader.addEventListener("load", async (event) => {
@@ -106,24 +130,28 @@ fileInput.addEventListener("change", (event) => {
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         duration = audioBuffer.duration;
 
-        window.addEventListener("keyup", reset, { once: true });
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                if (songChanged) {
+                    songChanged = false;
+                    reset();
+                } else if (paused) {
+                    handlePlayClick(); // resume
+                } else if (waitingToStart) {
+                    reset();
+                } else {
+                    player.jump(frameTimeDelta);
+                }
+            }
+        });
         window.addEventListener("touchStart", reset, { once: true });
        
-    });
+        });
 
     reader.readAsArrayBuffer(file);
 });
 
-function stopCurrentPlayback() {
-    if (source) {
-        try {
-            source.stop();
-        } catch (e) { }
-        source.disconnect();
-        source = null;
-    }
-    isPlaying = false;
-}
 
 function createSource() {
     source = audioContext.createBufferSource();
@@ -330,13 +358,23 @@ function reset(){
     gameOver= false;
     waitingToStart = false;
     ground.reset();
-    cactiController.reset();
-    score.reset();
+    paused = false;
+   
+
+     // If player doesn't exist or we're starting fresh, recreate all sprites
+    if (!player || songChanged) {
+        createSprites();
+        songChanged = false;
+    } else {
+        ground.reset();
+        cactiController.reset();
+        score.reset();
+    }
     gameSpeed = GAME_SPEED_START;
     
         // Update Game Objects
         pausedAt = 0; // to play from beginning
-
+        stopCurrentPlayback();
            
         if (audioBuffer && audioContext) {
             createSource();
@@ -360,6 +398,12 @@ function reset(){
 async function handlePlayClick() {
     if (!audioBuffer) {
         console.warn("No audio loaded.");
+        return;
+    }
+
+      if (songChanged) {
+        songChanged = false; // reset the flag
+        reset(); // full restart from beginning
         return;
     }
 
@@ -418,9 +462,10 @@ pauseBtn.addEventListener("click", () => {
 });
 
 function showStartGameText() {
+
     window.addEventListener('keydown', unlockAndPlayWelcomeAudio, { once: true });
     const fontSize = 20 * scaleRatio;
-    ctx.font = ` ${fontSize}px Courier New`;
+    ctx.font = `bold ${fontSize}px Courier New`;
     const x = game.width /5;
     const y = game.height / 2;
 
@@ -475,9 +520,9 @@ function gameLoop(currentTime) {
                 gameOverSound2.currentTime = 0;
                 gameOverSound2.play();
 
-                gameOverSound1.volume = 0.5;  // 30% volume
-                gameOverSound1.currentTime = 0;
-                gameOverSound1.play();
+                //gameOverSound1.volume = 0.5;  // 30% volume
+                //gameOverSound1.currentTime = 0;
+                //gameOverSound1.play();
                 setupGameReset();
                 score.setHighScore();
 

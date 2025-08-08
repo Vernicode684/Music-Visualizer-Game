@@ -8,6 +8,7 @@ export default class Player{
     falling = false;
     JUMP_SPEED = 0.6;
     GRAVITY = 0.4;
+    audio = new Audio("SoundEffects/Chrome Dinosaur Game Jumping - Sound Effect.mp3");
 
     constructor(ctx, width, height, minJumpHeight, maxJumpHeight, scaleRatio){
         this.ctx = ctx;
@@ -92,8 +93,13 @@ export default class Player{
     }
 
     jump(frameTimeDelta){
+
+
         if(this.jumpPressed){
             this.jumpInProgress = true;
+            this.audio.currentTime = 2;
+            this.audio.play();
+
         }
 
         if (this.jumpInProgress && !this.falling){
@@ -106,10 +112,14 @@ export default class Player{
                (this.y > this.game.height - this.maxJumpHeight && this.jumpPressed))
                 {
                     this.y -=this.JUMP_SPEED * frameTimeDelta * this.scaleRatio;
+                    
                 }
                 else{ //when the dino recahes maxHeight or the player lets go of jump
                     this.falling = true; //the dino is falling
+                    //this.audio.currentTime = 2;
+                    //this.audio.play();
                 }
+                
         } 
 
         else{ 
@@ -125,6 +135,8 @@ export default class Player{
                 this.jumpInProgress = false;
             }
         }
+
+
     }
 
     run(gameSpeed, frameTimeDelta){
