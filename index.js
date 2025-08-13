@@ -18,6 +18,8 @@ let duration = 0 ;
 let paused = false;
 let lastSongName = null;
 let progress = document.getElementById("progress");
+let levelCompleted = false;
+let spaceListenerAttached = false;
 
 
 const fileInput = document.getElementById("audio");
@@ -45,6 +47,8 @@ const GROUND_WIDTH = 2400;
 const GROUND_HEIGHT = 24;
 const GROUND_AND_CACTUS_SPEED = 0.5;
 
+//const encoder = new TextEncoder();
+//await writer.write(encoder.encode("Hello from browser!\n"));
 
 function unlockAndPlayWelcomeAudio() {
     welcome.currentTime = 19;
@@ -92,7 +96,22 @@ function stopCurrentPlayback() {
 
 
 // SPACE key handling
+ function handleSpaceKey(e) {
+            if (e.code !== "Space") return;
+            e.preventDefault();
 
+            // Treat any of these as "start/reset the run"
+            if (songChanged || levelCompleted || waitingToStart || gameOver) {
+                songChanged = false;           // clear flag so reset knows it’s not a song change anymore
+                reset();
+                return;
+            }
+
+            if (paused) {
+                handlePlayClick();             // resume from pause
+                return;
+            }
+}
 
 fileInput.addEventListener("change", (event) => {
     const file = event.target.files[0];
@@ -119,6 +138,7 @@ fileInput.addEventListener("change", (event) => {
 
     reader.addEventListener("load", async (event) => {
         const arrayBuffer = event.target.result;
+        console.log("Array Buffer", arrayBuffer);
         if (!audioContext || audioContext.state === "closed") {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -128,24 +148,24 @@ fileInput.addEventListener("change", (event) => {
         }
 
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        console.log("Audio Buffer", audioBuffer);
+        const pcmData1 = audioBuffer.getChannelData(0); // Float32Array
+        console.log('PCM data (first channel):', pcmData1);
+        const pcmData2 = audioBuffer.getChannelData(1); // Float32Array
+        console.log('PCM data (second channel):', pcmData2);
         duration = audioBuffer.duration;
 
-        window.addEventListener("keydown", (e) => {
-            if (e.code === "Space") {
-                e.preventDefault();
-                if (songChanged) {
-                    songChanged = false;
-                    reset();
-                } else if (paused) {
-                    handlePlayClick(); // resume
-                } else if (waitingToStart) {
-                    reset();
-                } else {
-                    player.jump(frameTimeDelta);
-                }
+    
+
+// Add the listener
+
+            if (!spaceListenerAttached) {
+                console.log("triggering the first space listner!")
+            window.addEventListener("keydown", handleSpaceKey);
+            spaceListenerAttached = true;
             }
-        });
-        window.addEventListener("touchStart", reset, { once: true });
+
+        window.addEventListener("touchstart", reset, { once: true });
        
         });
 
@@ -178,6 +198,23 @@ function formatTime(seconds) {
     return `${min}:${sec.toString().padStart(2, "0")}`;
 }
 
+function showLevelCompleted(){
+   
+    const fontSize = 30 * scaleRatio;
+    ctx.font = ` ${fontSize}px Courier New`;
+    ctx.fillStyle = "white"; 
+    const x = game.width/3 ;
+    const y = game.height/2;   
+  
+    ctx.lineWidth = 5 * scaleRatio;            // Thickness of the outline
+    ctx.strokeStyle = "black";                 // Outline color
+   ctx.strokeText("Level Completed!", x, y); // Draw outline
+
+    // Fill settings
+    ctx.fillStyle = "white";                   // Fill color
+     ctx.fillText("Level Completed!", x, y);   // Fill text 
+}
+
 function updateTime() {
     if (isPlaying && audioBuffer) {
         const elapsed = audioContext.currentTime - startTime;
@@ -187,7 +224,11 @@ function updateTime() {
         timeDisplay.textContent = `${formatTime(elapsed)} / ${formatTime(duration)}`;
         if (elapsed >= duration) {
             timeDisplay.textContent = `${formatTime(duration)} / ${formatTime(duration)}`;
+            levelCompleted = true;
+            
         }
+
+       
     }
     requestAnimationFrame(updateTime);
 }
@@ -338,10 +379,16 @@ function setupGameReset(){
     if(!hasAddedEventListenersForRestart){
         hasAddedEventListenersForRestart=true;
 
-        setTimeout(()=>{
-            window.addEventListener("keyup", reset,{once:true});
-            window.addEventListener("touchstart", reset,{once:true});
-        }, 1000);
+        console.log("setting up game reset!");
+
+            //window.removeEventListener("keydown", handleSpaceKey);
+            
+           window.addEventListener("keydown", reset, { once: true });
+        window.addEventListener("touchstart", reset, { once: true });
+
+      
+
+
 
     }
 }
@@ -356,6 +403,7 @@ function reset(){
 
     hasAddedEventListenersForRestart= false;
     gameOver= false;
+    levelCompleted = false;
     waitingToStart = false;
     ground.reset();
     paused = false;
@@ -369,6 +417,8 @@ function reset(){
         ground.reset();
         cactiController.reset();
         score.reset();
+        console.log("resetting the game!")
+        
     }
     gameSpeed = GAME_SPEED_START;
     
@@ -407,34 +457,25 @@ async function handlePlayClick() {
         return;
     }
 
-    if (isPlaying) {
-        console.log("Already playing");
+    if (gameOver || levelCompleted || waitingToStart) {
+        reset(); // reset also restarts audio from the beginning
         return;
     }
 
-    if (donePlaying) {
-        pausedAt = 0;
-    }
+    if (isPlaying) return;
+
+    if (donePlaying) pausedAt = 0;
 
     if (audioContext.state === 'suspended') {
         await audioContext.resume();
     }
 
-    if(gameOver){
-        return;
-    }
-
     paused = false;  // <== Add this line to resume game update
-
     createSource();
     startTime = audioContext.currentTime - pausedAt;
     source.start(0, pausedAt);
     isPlaying = true;
     donePlaying = false;
-
-    playBtn.removeEventListener("click", handlePlayClick);
-    playBtn.addEventListener("click", handlePlayClick);
-
 
     console.log("Playback started at offset:", pausedAt);
 }
@@ -526,10 +567,20 @@ function gameLoop(currentTime) {
                 setupGameReset();
                 score.setHighScore();
 
-                playBtn.addEventListener("click", handlePlayClick);
+            }
+
+            if (levelCompleted){
+                ground.reset();
+                cactiController.reset();
+                score.reset();
+                player.reset();
+                setupGameReset();
+                
+            }
+
             }
         }
-    }
+    
 
     // Always draw, even if paused
     ground.draw();
@@ -540,6 +591,11 @@ function gameLoop(currentTime) {
     if (gameOver) {
         showGameOver();
     }
+
+      if (levelCompleted) {
+        showLevelCompleted();
+    }
+
     if (waitingToStart) {
         showStartGameText();
     }

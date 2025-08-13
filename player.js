@@ -81,7 +81,7 @@ export default class Player{
     };
 
     update(gameSpeed, frameTimeDelta){
-            console.log(this.jumpPressed);
+            //console.log(this.jumpPressed);
             this.run(gameSpeed, frameTimeDelta);
  
             if (this.jumpInProgress){
@@ -90,6 +90,10 @@ export default class Player{
 
             this.jump(frameTimeDelta);
 
+    }
+
+    reset(){
+         this.image = this.standingStillImage;
     }
 
     jump(frameTimeDelta){

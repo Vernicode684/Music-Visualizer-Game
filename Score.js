@@ -2,7 +2,7 @@ export default class Score {
     
     score = 0;
     HIGHT_SCORE_KEY = "highScore";
-    HI_SOUND = new Audio("Mario Coin Sound - Sound Effect (HD).mp3");
+    //HI_SOUND = new Audio("Mario Coin Sound - Sound Effect (HD).mp3");
    
 
 
@@ -24,8 +24,8 @@ export default class Score {
         const highScore = Number(localStorage.getItem(this.HIGHT_SCORE_KEY));
         if(this.score > highScore){
             localStorage.setItem(this.HIGHT_SCORE_KEY, Math.floor(this.score));
-            HI_SOUND.currentTime = 0;
-            HI_SOUND.play();
+            //HI_SOUND.currentTime = 0;
+            //HI_SOUND.play();
 
         }
     }
@@ -44,6 +44,6 @@ export default class Score {
         const highScorePadded = highScore.toString().padStart(6,0);
 
         this.ctx.fillText(scorePadded, scoreX, y);
-        this.ctx.fillText(`HI ${highScorePadded}`, highsScoreX, y);
+        this.ctx.fillText(`🏆${highScorePadded}`, highsScoreX, y);
     }
 }
