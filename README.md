@@ -1,6 +1,6 @@
 # 🦖 Dino Beats 🎵  
 
-Welcome to **Dinosaur Music Visualizer** — a remix of the classic Chrome Dino game with a twist:  
+Welcome to **Dino Beats** — a remix of the classic Chrome Dino game with a twist:  
 Upload your own music 🎶 and watch the visualizer light up while you jump over cacti!  
 
 ---
