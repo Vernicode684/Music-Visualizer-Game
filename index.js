@@ -136,12 +136,14 @@ fileInput.addEventListener("change", (event) => {
                 e.preventDefault();
                   if (songChanged || levelCompleted || waitingToStart || gameOver) {
                     levelCompleted =false;
-                songChanged = false;           // clear flag so reset knows it’s not a song change anymore
-                reset();
-                return;
+                    songChanged = false;           // clear flag so reset knows it’s not a song change anymore
+                    isPlaying= false;
+                    reset();
+                    return;
             }
 
             if (paused) {
+                console.log("Play button is triggered!")
                 handlePlayClick();             // resume from pause
                 return;
             }
@@ -434,7 +436,7 @@ async function handlePlayClick() {
         return;
     }
 
-    if (isPlaying || gameOver) return;
+    if (isPlaying || gameOver || levelCompleted) return;
 
     if (donePlaying) pausedAt = 0;
 
@@ -553,6 +555,8 @@ function gameLoop(currentTime) {
                 score.reset();
                 player.reset();
                 setupGameReset();
+
+
                 
                 
             }
