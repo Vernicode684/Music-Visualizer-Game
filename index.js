@@ -8,7 +8,9 @@ let source = null; // the thing that actually plays the sound
 let analyser = null;
 let currentSongName = null;
 let songChanged = false;
+let showText = false;
 
+let currentVideoIndex = 0; // start with first video
 let pausedAt = 0;     // How far into the audio we paused (seconds)
 let startTime = 0;    // AudioContext time when playback started
 let isPlaying = false; 
@@ -19,6 +21,8 @@ let paused = false;
 let lastSongName = null;
 let progress = document.getElementById("progress");
 let levelCompleted = false;
+let video = document.getElementById("bgVideo");
+
 
 
 const fileInput = document.getElementById("audio");
@@ -32,6 +36,7 @@ const ctx = game.getContext("2d");
 const gameOverSound1 = new Audio("SoundEffects/game-over-voice-355993.mp3");
 const gameOverSound2 = new Audio("SoundEffects/game-over-arcade-6435.mp3");
 const welcome = new Audio("SoundEffects/Roi (Instrumental).mp3");
+const levelcompletedsound = new Audio("SoundEffects/Super Mario Bros. Level Complete Soundtrack - Sound Effect for editing.mp3");
 
 const GAME_SPEED_START = 0.5; // 1.0
 const GAME_SPEED_INCREMENT = 0.00001;
@@ -46,6 +51,15 @@ const GROUND_WIDTH = 2400;
 const GROUND_HEIGHT = 24;
 const GROUND_AND_CACTUS_SPEED = 0.5;
 
+const videos = [
+  "Videos/SPACE.mp4",
+  "Videos/117052-710546287_small.mp4",
+  "Videos/263295_small (1).mp4",
+  "Videos/266847_small.mp4"
+];
+
+const milestones = [0, 0.25,0.50,0.75];
+
 
 function unlockAndPlayWelcomeAudio() {
     welcome.currentTime = 19;
@@ -56,9 +70,9 @@ function unlockAndPlayWelcomeAudio() {
 }
 
 const CACTI_CONFIG = [
-    {width:38/1.5, height:60/1.5, image:'images/cactus_1.png'},
-    {width:78/1.5, height:60/1.5, image:'images/cactus_2.png'},
-    {width:58/1.5,   height:60/1.5, image:'images/cactus_3.png'},
+    {width:48/1.5, height:100/1.5, image:'images/cactus_1.png'},
+    {width:88/1.5, height:100/1.5, image:'images/cactus_2.png'},
+    {width:88/1.5,   height:70/1.5, image:'images/cactus_3.png'},
 ] 
   
 // Game Objects
@@ -138,6 +152,7 @@ fileInput.addEventListener("change", (event) => {
                     levelCompleted =false;
                     songChanged = false;           // clear flag so reset knows it’s not a song change anymore
                     isPlaying= false;
+                    console.log("Current video index:", currentVideoIndex);
                     reset();
                     return;
             }
@@ -208,11 +223,80 @@ function updateTime() {
         if (elapsed >= duration) {
             timeDisplay.textContent = `${formatTime(duration)} / ${formatTime(duration)}`;
             levelCompleted = true;
+            
+        
         }
+
+        
     }
     requestAnimationFrame(updateTime);
 }
 updateTime();
+
+
+
+
+function changeVideo() {
+    if (!isPlaying) return;
+        const completed = audioContext.currentTime - startTime;
+
+        if (completed >= duration*0.21 && currentVideoIndex == 0) {
+            switchVideo(currentVideoIndex);
+            console.log("current video index:", currentVideoIndex);
+
+            // Show the text for 2 seconds
+            showText = true;
+            setTimeout(() => {
+                showText = false;
+            }, 2000); // 2000 ms = 2 seconds
+        }
+
+        if (completed >= duration*0.50 && currentVideoIndex == 1) {
+            switchVideo(currentVideoIndex);
+            console.log("current video index:", currentVideoIndex);
+            // You can trigger another text here if needed
+        }
+
+        if (completed >= duration*0.75 && currentVideoIndex == 2) {
+            switchVideo(currentVideoIndex);
+            console.log("current video index:", currentVideoIndex);
+        }
+
+
+         if (completed >= duration && currentVideoIndex == 3) {
+            switchVideo(currentVideoIndex);
+            console.log("current video index:", currentVideoIndex);
+        }
+
+        // Draw text if the flag is true
+        if (showText) {
+            const fontSize = 60 * scaleRatio;
+            ctx.font = `${fontSize}px Courier New`;
+            ctx.lineWidth = 5 * scaleRatio;
+            ctx.strokeStyle = "black";
+            ctx.fillStyle = "white";
+            const x = game.width / 3;
+            const y = game.height / 2;
+            ctx.strokeText("LET'S GO!", x, y);
+            ctx.fillText("LET'S GO!", x, y);
+        }
+    
+
+    requestAnimationFrame(changeVideo);
+}
+
+function switchVideo(index){
+     video.src= videos[index];
+     video.load();
+     video.play();
+     currentVideoIndex = (currentVideoIndex + 1) % (videos.length);
+
+     //playing space then (0+1)%4=1 --> moon city
+     // playing moon city then (1+1)%4=2 --> highway
+     // playing highway then (2+1)%4=3 --> purple  
+     // playing purple space then (3+1)%4=0 --> space video 
+};
+//changeVideo();
 
 function visualize() {
     const frequencyBufferLength = analyser.frequencyBinCount;
@@ -363,6 +447,7 @@ function setupGameReset(){
             window.addEventListener("keyup", reset,{once:true});
             window.addEventListener("touchstart", reset,{once:true});
         }, 1000);
+        currentVideoIndex=0;
 
     }
 }
@@ -406,7 +491,6 @@ function reset(){
             donePlaying = false;
         }
 
-        
            
 
             console.log("Audio started from file upload");
@@ -555,6 +639,7 @@ function gameLoop(currentTime) {
                 score.reset();
                 player.reset();
                 setupGameReset();
+                
 
 
                 
@@ -579,7 +664,11 @@ function gameLoop(currentTime) {
 
     if (levelCompleted){
         showLevelCompleted();
+        score.setHighScore();
+        
+        
     }
+    changeVideo()
 
     requestAnimationFrame(gameLoop);
 }

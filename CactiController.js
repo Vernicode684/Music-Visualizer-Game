@@ -1,7 +1,7 @@
 import Cactus from "./Cactus.js";
 
 export default class CactiController {
-    CACTUS_INTERVAL_MIN = 600; 
+    CACTUS_INTERVAL_MIN = 1500; 
     CACTUS_INTERVAL_MAX = 2000;
 
     cacti = [];
@@ -58,7 +58,7 @@ export default class CactiController {
         });
       
         this.cacti = this.cacti.filter((cactus)=> cactus.x > - cactus.width);
-        console.log(this.cacti.length); 
+        //console.log(this.cacti.length); 
     } 
 
     draw() {
