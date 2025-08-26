@@ -66,7 +66,6 @@ const videos = [
 
 const milestones = [0, 0.25,0.50,0.75];
 
-
 function unlockAndPlayWelcomeAudio() {
     welcome.currentTime = 19;
     welcome.play().catch(() => console.log('Audio playback was prevented by the browser.'));
@@ -97,7 +96,6 @@ let waitingToStart = true;
 
 canvas.width = canvas.clientWidth;
 canvas.height = canvas.clientHeight;
-
 
 function stopCurrentPlayback() {
     if (source) {

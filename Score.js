@@ -30,6 +30,11 @@ export default class Score {
         }
     }
 
+       resetHighScore() {
+        localStorage.setItem(this.HIGHT_SCORE_KEY, 0);
+        this.highScore = 0; // also reset cached value
+    }
+
     draw(){
         const highScore = Number(localStorage.getItem(this.HIGHT_SCORE_KEY));
         const y = 20 * this.scaleRatio;

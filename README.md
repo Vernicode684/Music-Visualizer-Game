@@ -1,5 +1,8 @@
 # 🦖 Dino Beats 🎵  
 
+<img align="right" src="images/Dino Beats.png" alt="Dino Beats Logo" width="120" />
+
+
 Welcome to **Dino Beats** — a remix of the classic Chrome Dino game with a twist:  
 Upload your own music 🎶 and watch the visualizer light up while you jump over cacti!  
 
