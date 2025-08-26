@@ -9,6 +9,8 @@ let analyser = null;
 let currentSongName = null;
 let songChanged = false;
 let showText = false;
+let textMessage = "";
+
 
 let currentVideoIndex = 0; // start with first video
 let pausedAt = 0;     // How far into the audio we paused (seconds)
@@ -22,7 +24,11 @@ let lastSongName = null;
 let progress = document.getElementById("progress");
 let levelCompleted = false;
 let video = document.getElementById("bgVideo");
-
+// checkpoint flags
+let checkpoint21 = false;
+let checkpoint50 = false;
+let checkpoint75 = false;
+let checkpoint100 = false;
 
 
 const fileInput = document.getElementById("audio");
@@ -103,9 +109,6 @@ function stopCurrentPlayback() {
     }
     isPlaying = false;
 }
-
-
-
 // SPACE key handling
 
 
@@ -118,9 +121,6 @@ fileInput.addEventListener("change", (event) => {
  
       return;
     }
-
-    
-
     // Stop previous source if any
     stopCurrentPlayback();
 
@@ -223,6 +223,7 @@ function updateTime() {
         if (elapsed >= duration) {
             timeDisplay.textContent = `${formatTime(duration)} / ${formatTime(duration)}`;
             levelCompleted = true;
+            setupGameReset();
             
         
         }
@@ -234,43 +235,76 @@ function updateTime() {
 updateTime();
 
 
+function startPlayback() {
+    // play first video immediately
+    video.src = videos[currentVideoIndex];
+    video.play().catch(err => console.warn("Autoplay blocked:", err));
 
+    requestAnimationFrame(changeVideo);
+}
+startPlayback();
 
+let showText1=false;
 function changeVideo() {
     if (!isPlaying) return;
         const completed = audioContext.currentTime - startTime;
 
-        if (completed >= duration*0.21 && currentVideoIndex == 0) {
-            switchVideo(currentVideoIndex);
+        if (completed >= duration*0.21 && !checkpoint21) {
+            checkpoint21=true;
+            nextVideo();
             console.log("current video index:", currentVideoIndex);
 
             // Show the text for 2 seconds
+          textMessage="LET'S GO!"
+           showText = true;
+            setTimeout(() => {
+                showText = false;
+            }, 1000); // 2000 ms = 2 seconds*/
+
+            
+        }
+
+        if (completed >= duration*0.50 && !checkpoint50) {
+            checkpoint50=true;
+            nextVideo();
+            console.log("current video index:", currentVideoIndex);
+            // You can trigger another text here if needed
+            textMessage = "KEEP IT UP!";
             showText = true;
             setTimeout(() => {
                 showText = false;
-            }, 2000); // 2000 ms = 2 seconds
+            }, 1000); // 2000 ms = 2 seconds*/
+            //showKeepitUp();
         }
 
-        if (completed >= duration*0.50 && currentVideoIndex == 1) {
-            switchVideo(currentVideoIndex);
+        if (completed >= duration*0.75 && !checkpoint75) {
+            nextVideo();
+            checkpoint75= true;
+            textMessage = "ALMOST THERE!";
+
+            showText = true;
+            setTimeout(() => {
+                showText = false;
+            }, 1000); // 2000 ms = 2 seconds*/
+
+            //showAmostThere();
             console.log("current video index:", currentVideoIndex);
-            // You can trigger another text here if needed
-        }
-
-        if (completed >= duration*0.75 && currentVideoIndex == 2) {
-            switchVideo(currentVideoIndex);
-            console.log("current video index:", currentVideoIndex);
         }
 
 
-         if (completed >= duration && currentVideoIndex == 3) {
-            switchVideo(currentVideoIndex);
+         if (completed >= duration &&  !checkpoint100 ) {
+            nextVideo();
+            checkpoint100 = true;
+
+             // reset checkpoints for next loop
+             
+        
             console.log("current video index:", currentVideoIndex);
         }
 
         // Draw text if the flag is true
-        if (showText) {
-            const fontSize = 60 * scaleRatio;
+       if (showText1) {
+            const fontSize = 50 * scaleRatio;
             ctx.font = `${fontSize}px Courier New`;
             ctx.lineWidth = 5 * scaleRatio;
             ctx.strokeStyle = "black";
@@ -280,24 +314,19 @@ function changeVideo() {
             ctx.strokeText("LET'S GO!", x, y);
             ctx.fillText("LET'S GO!", x, y);
         }
+
     
 
-    requestAnimationFrame(changeVideo);
+    //requestAnimationFrame(changeVideo);
 }
 
-function switchVideo(index){
-     video.src= videos[index];
-     video.load();
-     video.play();
-     currentVideoIndex = (currentVideoIndex + 1) % (videos.length);
-
-     //playing space then (0+1)%4=1 --> moon city
-     // playing moon city then (1+1)%4=2 --> highway
-     // playing highway then (2+1)%4=3 --> purple  
-     // playing purple space then (3+1)%4=0 --> space video 
-};
+function nextVideo() {
+    currentVideoIndex = (currentVideoIndex + 1) % videos.length;
+    video.src = videos[currentVideoIndex];
+    video.play().catch(err => console.warn("Play blocked:", err));
+    console.log("Switched to video index:", currentVideoIndex);
+}
 //changeVideo();
-
 function visualize() {
     const frequencyBufferLength = analyser.frequencyBinCount;
     const frequencyData = new Uint8Array(frequencyBufferLength);
@@ -447,7 +476,14 @@ function setupGameReset(){
             window.addEventListener("keyup", reset,{once:true});
             window.addEventListener("touchstart", reset,{once:true});
         }, 1000);
-        currentVideoIndex=0;
+        checkpoint21 = false;
+        checkpoint50 = false;
+        checkpoint75 = false;
+        checkpoint100 = false;
+
+        if (levelCompleted || gameOver){
+           startTime = audioContext.currentTime;
+        }
 
     }
 }
@@ -625,28 +661,24 @@ function gameLoop(currentTime) {
                 gameOverSound2.currentTime = 0;
                 gameOverSound2.play();
 
-                //gameOverSound1.volume = 0.5;  // 30% volume
-                //gameOverSound1.currentTime = 0;
-                //gameOverSound1.play();
                 setupGameReset();
                 score.setHighScore();
 
-                //playBtn.addEventListener("click", handlePlayClick);
 
-                if (levelCompleted){
+             
+            }
+
+             if (levelCompleted){
                 ground.reset();
                 cactiController.reset();
                 score.reset();
                 player.reset();
-                setupGameReset();
+                setupGameReset();   
                 
-
-
-                
-                
-            }
             }
         }
+
+          
     }
 
     // Always draw, even if paused
@@ -668,7 +700,19 @@ function gameLoop(currentTime) {
         
         
     }
-    changeVideo()
+    changeVideo();
+
+    if (showText && textMessage && !levelCompleted && !gameOver) {
+        const fontSize = 60 * scaleRatio;
+        ctx.font = `${fontSize}px Courier New`;
+        ctx.lineWidth = 5 * scaleRatio;
+        ctx.strokeStyle = "black";
+        ctx.fillStyle = "white";
+        const x = game.width / 4;
+        const y = game.height / 2;
+        ctx.strokeText(textMessage, x, y);
+        ctx.fillText(textMessage, x, y);
+    }
 
     requestAnimationFrame(gameLoop);
 }
@@ -681,6 +725,5 @@ requestAnimationFrame(gameLoop);
     window.addEventListener("keyup", reset, {once:true });
     window.addEventListener("touchStart", reset, {once:true });
  }*/
-
 
 

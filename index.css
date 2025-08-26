@@ -126,4 +126,16 @@ body {
    box-shadow: 0 5px 5px rgba(256, 26, 26, 0.22);
 }
   
-
+.dino-duck {
+  position: absolute;
+  bottom: 0; /* Place on "ground" */
+  left: 50px; /* Position horizontally */
+  
+  width: 59px;   /* Width of ducking dino frame */
+  height: 30px;  /* Height of ducking dino frame */
+  
+  background-image: url('sprite_sheet.png');
+  background-repeat: no-repeat;
+  background-position: -1662px -18px; /* Ducking dino coordinates */
+  image-rendering: pixelated; /* Make it crisp */
+}
