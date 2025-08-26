@@ -17,6 +17,8 @@ Upload your own music 🎶 and watch the visualizer light up while you jump over
   
 📈 Tracks your **score and high score**  
 
+🏁 **Milestone messages & dynamic videos** — **watch background videos change** as you hit score milestones 🎉  
+
 🔊 Fun **game over sound effects**  
 
 🎤 Plays a **welcome message** once before the game starts  
